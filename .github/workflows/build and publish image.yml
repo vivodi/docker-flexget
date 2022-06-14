@@ -1,0 +1,105 @@
+name: Create and Publish FlexGet Docker Image
+on: [ push, pull_request ]
+jobs:
+  build-numpy-wheels:
+    name: Build numpy wheels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Build wheels
+        id: build
+        run: |
+          mkdir /tmp/wheels
+          docker run --platform linux/arm64 --mount type=bind,src=/tmp/wheels,dst=/wheels --rm python:alpine /bin/ash -c "apk add --no-cache g++ && pip wheel -w /wheels numpy"
+      - name: Upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: numpy-wheels
+          path: /tmp/wheels
+  build-pandas-wheels:
+    name: Build pandas-wheels
+    runs-on: ubuntu-latest
+    needs: build-numpy-wheels
+    outputs:
+      pandas: ${{ steps.build.outputs.pandas }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Download numpy wheels
+        uses: actions/download-artifact@v3
+        with:
+          name: numpy-wheels
+          path: /tmp/wheels
+      - name: Delete numpy wheels
+        uses: geekyeggo/delete-artifact@v1
+        with:
+          name: numpy-wheels
+      - name: Build wheels
+        id: build
+        run: |
+          pandas=`grep pandas== requirements.txt`
+          docker run --platform linux/arm64 --mount type=bind,src=/tmp/wheels,dst=/wheels --rm python:alpine /bin/ash -c "apk add --no-cache g++ && pip wheel -w /wheels -f /wheels $pandas"
+          echo "::set-output name=pandas::$pandas"
+      - name: Upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: /tmp/wheels
+  build-and-publish-image:
+    name: Build and publish image
+    runs-on: ubuntu-latest
+    needs: build-pandas-wheels
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download wheels
+        uses: actions/download-artifact@v3
+        with:
+          name: wheels
+          path: wheels
+      - name: Generate Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ secrets.DOCKER_USERNAME }}/flexget
+            ghcr.io/${{ github.repository_owner }}/flexget
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{major}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}}
+            type=edge
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Ensure version consistency
+        run: sed -i '/pandas==/c\\${{ needs.build-pandas-wheels.outputs.pandas }}' requirements.txt
+      - name: Build and push a FlexGet Docker image
+        uses: docker/bake-action@v2.0.0
+        with:
+          push: true
+          files: |
+            ./docker-bake.hcl
+            ${{ steps.meta.outputs.bake-file }}
+          targets: flexget
