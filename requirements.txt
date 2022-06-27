@@ -159,7 +159,7 @@ numpy==1.22.4
     #   pandas
 packaging==21.3
     # via matplotlib
-pandas==1.4.2
+pandas==1.4.3
     # via -r requirements.in
 pillow==9.1.1
     # via
