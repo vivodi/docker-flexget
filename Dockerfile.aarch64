@@ -1,16 +1,6 @@
-FROM python:alpine
-ARG TARGETPLATFORM
+FROM python
 COPY requirements.txt /tmp
 RUN set -eu; \
-    apk add --no-cache \
-        g++ \
-        make \
-        libffi-dev \
-    ; \
-    [ $TARGETPLATFORM = linux/arm64 ] && apk add --no-cache \
-        zlib-dev \
-        jpeg-dev \
-    ; \
     pip install -r /tmp/requirements.txt --root /root-dir --no-warn-script-location; \
     find /root-dir/usr/local -depth \
     \( \
@@ -19,16 +9,12 @@ RUN set -eu; \
     \) -exec rm -rf '{}' +
 COPY root /root-dir
 
-FROM python:alpine
+FROM python:slim
 LABEL maintainer="madwind.cn@gmail.com"
 LABEL org.label-schema.name="flexget"
 ENV PYTHONUNBUFFERED 1
 COPY --from=0 /root-dir /
 RUN set -eu; \
-    apk add --no-cache \
-        shadow \
-        libstdc++ \
-    ; \
     groupmod -g 1000 users; \
     useradd -mUu 911 flexget; \
     usermod -G users flexget; \
