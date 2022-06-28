@@ -19,7 +19,7 @@ babelfish==0.6.0
     # via
     #   flexget
     #   guessit
-baidu-aip==4.16.3
+baidu-aip==4.16.5
     # via -r requirements.in
 beautifulsoup4==4.10.0
     # via flexget
