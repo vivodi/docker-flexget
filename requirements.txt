@@ -50,8 +50,6 @@ click==8.0.4
     # via
     #   flask
     #   flexget
-colorama==0.4.4
-    # via flexget
 commonmark==0.9.1
     # via
     #   flexget
@@ -84,16 +82,14 @@ flask-restful==0.3.9
     # via flexget
 flask-restx==0.5.1
     # via flexget
-flexget==3.3.17
+flexget==3.3.20
     # via -r requirements.in
 fonttools==4.33.3
     # via matplotlib
 fuzzywuzzy==0.18.0
     # via -r requirements.in
 greenlet==1.1.2
-    # via
-    #   flexget
-    #   sqlalchemy
+    # via sqlalchemy
 guessit==3.4.3
     # via flexget
 html5lib==1.1
@@ -158,7 +154,9 @@ numpy==1.22.4
     #   matplotlib
     #   pandas
 packaging==21.3
-    # via matplotlib
+    # via
+    #   flexget
+    #   matplotlib
 pandas==1.4.2
     # via -r requirements.in
 pillow==9.1.1
