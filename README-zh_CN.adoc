@@ -1,0 +1,56 @@
+= docker-flexget
+:repo: madwind/docker-flexget
+:image: madwind/flexget
+
+image:https://github.com/{repo}/actions/workflows/build-and-push-flexget-docker-images.yml/badge.svg[CI, link=https://github.com/{repo}/actions/workflows/build-and-push-flexget-docker-images.yml]
+image:https://badgen.net/docker/pulls/{image}?icon=docker[Downloads, link=https://registry.hub.docker.com/r/{image}]
+image:https://img.shields.io/github/license/{repo}.svg[GitHub license, link=https://github.com/{repo}/blob/main/LICENSE]
+
+link:README.adoc[English]
+
+docker-flexget 是用于运行 https://github.com/madwind/flexget_qbittorrent_mod[flexget_qbittorrent_mod] 的 Docker 映像。
+
+== 使用
+=== docker run
+[source,console,subs=attributes+]
+$ docker run -d \
+    --name=<container name> \
+    -p 3539:3539 \
+    -v <path for data files>:/downloads \
+    -v <path for config files>:/config \
+    -e PUID=<UID for user> \
+    -e PGID=<GID for user> \
+    -e TZ=<timezone> \
+    -e FG_WEBUI_PASSWD=<desired password> \
+    -e FG_LOG_LEVEL=<log level>
+    {image}
+
+=== docker compose
+[source,yml,subs=attributes+]
+version: '3.7'
+services:
+  flexget:
+    image: {image}
+    container_name: flexget
+    environment:
+      # 密码需保证复杂度
+      FG_WEBUI_PASSWD: <password>
+      # 日志级别
+      FG_LOG_LEVEL: INFO
+      TZ: Asia/Shanghai
+      PUID: 1000
+      PGID: 1000
+    volumes:
+      - <path for config files>:/config
+      - <path for data files>:/downloads
+    ports:
+      - "3539:3539"
+
+== 构建映像
+=== 本地构建
+要在本地构建 FlexGet Docker 映像，运行 `docker buildx f`。
+
+=== 使用 GitHub Actions 构建
+. https://github.com/{repo}/fork[分叉]存储库。
+. 在 repository settings -> secrets and variables -> actions -> repository secrets，输入 DOCKERHUB_USERNAME 和 DOCKERHUB_TOKEN。
+. git push 到 `main` 分支将自动构建并推送 Docker 映像。

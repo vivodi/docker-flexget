@@ -1,0 +1,56 @@
+= docker-flexget
+:repo: madwind/docker-flexget
+:image: madwind/flexget
+
+image:https://github.com/{repo}/actions/workflows/build-and-push-flexget-docker-images.yml/badge.svg[CI, link=https://github.com/{repo}/actions/workflows/build-and-push-flexget-docker-images.yml]
+image:https://badgen.net/docker/pulls/{image}?icon=docker[Downloads, link=https://registry.hub.docker.com/r/{image}]
+image:https://img.shields.io/github/license/{repo}.svg[GitHub license, link=https://github.com/{repo}/blob/main/LICENSE]
+
+link:README-zh_CN.adoc[简体中文]
+
+docker-flexget is a Docker image for running https://github.com/madwind/flexget_qbittorrent_mod[flexget_qbittorrent_mod].
+
+== Usage
+=== docker run
+[source,console,subs=attributes+]
+$ docker run -d \
+    --name=<container name> \
+    -p 3539:3539 \
+    -v <path for data files>:/downloads \
+    -v <path for config files>:/config \
+    -e PUID=<UID for user> \
+    -e PGID=<GID for user> \
+    -e TZ=<timezone> \
+    -e FG_WEBUI_PASSWD=<desired password> \
+    -e FG_LOG_LEVEL=<log level>
+    {image}
+
+=== docker compose
+[source,yml,subs=attributes+]
+version: '3.7'
+services:
+  flexget:
+    image: {image}
+    container_name: flexget
+    environment:
+      # The password should be complex enough
+      FG_WEBUI_PASSWD: <password>
+      # Log Level
+      FG_LOG_LEVEL: INFO
+      TZ: Asia/Shanghai
+      PUID: 1000
+      PGID: 1000
+    volumes:
+      - <path for config files>:/config
+      - <path for data files>:/downloads
+    ports:
+      - "3539:3539"
+
+== Build the image
+=== Local build
+To build the FlexGet Docker image locally, run `docker buildx f`.
+
+=== Build with GitHub Actions
+. https://github.com/{repo}/fork[Fork] the repository.
+. In repository settings -> secrets and variables -> actions -> repository secrets, enter DOCKERHUB_USERNAME and DOCKERHUB_TOKEN.
+. A git push to the `main` branch will automatically build and push the Docker image.
